@@ -1,7 +1,5 @@
 <?php
-
 namespace Hcode\Model;
-
 use \Hcode\DB\Sql;
 use \Hcode\Model;
 use \Hcode\Mailer;
@@ -11,7 +9,6 @@ class User extends Model {
 	const ERROR = "UserError";
 	const ERROR_REGISTER = "UserErrorRegister";
 	const SUCCESS = "UserSucesss";
-
 	public static function getFromSession()
 	{
 		$user = new User();
@@ -83,84 +80,88 @@ class User extends Model {
 		$sql = new Sql();
 		return $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b USING(idperson) ORDER BY b.desperson");
 	}
-
-	public function save(){
- 
+	public function save()
+	{
 		$sql = new Sql();
-	  
 		$results = $sql->select("CALL sp_users_save(:desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)", array(
-		   ":desperson"=>utf8_decode($this->getdesperson()),
-		   ":deslogin"=>$this->getdeslogin(),
-		   ":despassword"=>$this->getdespassword(),
-		   ":desemail"=>$this->getdesemail(),
-		   ":nrphone"=>$this->getnrphone(),
-		   ":inadmin"=>$this->getinadmin()
-		));
-	  
-		$this->setData($results[0]);
-	  
-	 }
-
-
-	public function get($iduser){
- 		$sql = new Sql();
-		$results = $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b USING(idperson) WHERE a.iduser = :iduser;", array(
-		":iduser"=>$iduser
-		));
-		
-		$data = $results[0];
-		$this->setData($data);
- 	}
-	 public function update(){
- 
-		$sql = new Sql();
-	 
-		$results = $sql->select("CALL sp_usersupdate_save(:iduser, :desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)", array(
-			":iduser"=>$this->getiduser(),
 			":desperson"=>utf8_decode($this->getdesperson()),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>$this->getdespassword(),
+			":despassword"=>User::getPasswordHash($this->getdespassword()),
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()
 		));
-	 
 		$this->setData($results[0]);
-	 
 	}
-	public function delete(){
+	public function get($iduser)
+	{
 		$sql = new Sql();
-		$sql ->query("CALL sp_users_delete(:iduser)", array(
+		$results = $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b USING(idperson) WHERE a.iduser = :iduser", array(
+			":iduser"=>$iduser
+		));
+		$data = $results[0];
+		$data['desperson'] = utf8_encode($data['desperson']);
+		$this->setData($data);
+	}
+	public function update()
+	{
+		$sql = new Sql();
+		$results = $sql->select("CALL sp_usersupdate_save(:iduser, :desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)", array(
+			":iduser"=>$this->getiduser(),
+			":desperson"=>utf8_decode($this->getdesperson()),
+			":deslogin"=>$this->getdeslogin(),
+			":despassword"=>User::getPasswordHash($this->getdespassword()),
+			":desemail"=>$this->getdesemail(),
+			":nrphone"=>$this->getnrphone(),
+			":inadmin"=>$this->getinadmin()
+		));
+		$this->setData($results[0]);		
+	}
+	public function delete()
+	{
+		$sql = new Sql();
+		$sql->query("CALL sp_users_delete(:iduser)", array(
 			":iduser"=>$this->getiduser()
 		));
 	}
-
-	public static function getForgot($email){
+	public static function getForgot($email, $inadmin = true)
+	{
 		$sql = new Sql();
 		$results = $sql->select("
-		SELECT *
-		FROM tb_persons a
-		INNER JOIN tb_users b USING(idperson)
-		WHERE a.desemail =  :email;
+			SELECT *
+			FROM tb_persons a
+			INNER JOIN tb_users b USING(idperson)
+			WHERE a.desemail = :email;
 		", array(
 			":email"=>$email
 		));
-		if(count($results)===0){
-			throw new \Exception("Este não é o seu email de cadastro");
-		}else{
-			$data=$results[0];
+		if (count($results) === 0)
+		{
+			throw new \Exception("Não foi possível recuperar a senha.");
+			
+		}
+		else
+		{
+			$data = $results[0];
 			$results2 = $sql->select("CALL sp_userspasswordsrecoveries_create(:iduser, :desip)", array(
 				":iduser"=>$data["iduser"],
 				":desip"=>$_SERVER["REMOTE_ADDR"]
 			));
-			if(count($results2)===0){
-				throw new \Exception("Ocorreu um erro");
-			}else{
+			if (count($results2) === 0)
+			{
+				throw new \Exception("Não foi possível recuperar a senha");
+			}
+			else
+			{
 				$dataRecovery = $results2[0];
 				$code = base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_128, User::SECRET, $dataRecovery["idrecovery"], MCRYPT_MODE_ECB));
-				$link ="http://localhost:3000/admin/forgot/reset?code=$code";
-
-				$mailer = new Mailer($data["desemail"], $data["desperson"], "Redefinir senha da Hcode Store", "forgot", array(
+				if ($inadmin === true) {
+					
+					$link = "http://localhost:3000/admin/forgot/reset?code=$code";
+				} else {
+					$link = "http://localhost:3000/forgot/reset?code=$code";
+				}
+				$mailer = new Mailer($data["desemail"], $data["desperson"], "Redefinir Senha da Hcode Store", "forgot", array(
 					"name"=>$data["desperson"],
 					"link"=>$link
 				));
@@ -169,43 +170,103 @@ class User extends Model {
 			}
 		}
 	}
-
-	public static function validForgotDecrypt($code){
+	public static function validForgotDecrypt($code)
+	{
 		$idrecovery = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, User::SECRET, base64_decode($code), MCRYPT_MODE_ECB);
-
 		$sql = new Sql();
-		$results = $sql->select(
-			"SELECT * FROM tb_userspasswordsrecoveries a
+		$results = $sql->select("
+			SELECT * 
+			FROM tb_userspasswordsrecoveries a
 			INNER JOIN tb_users b USING(iduser)
-			INNER JOIN tb_persons c USING(idperson) 
-			WHERE
-			a.idrecovery = :idrecovery
-			AND
-			a.dtrecovery IS NULL
-			AND 
-			DATE_ADD(a.dtregister, INTERVAL 1 HOUR) >= now();", array(
-				":idrecovery"=>$idrecovery
-			)
-		);
-			if (count($results)===0){
-				throw new \Exception("Não foi possivel recuperar a senha.", 1);
-			}else{
-				return $results[0];
-			}
+			INNER JOIN tb_persons c USING(idperson)
+			WHERE 
+				a.idrecovery = :idrecovery
+			    AND
+			    a.dtrecovery IS NULL
+			    AND
+			    DATE_ADD(a.dtregister, INTERVAL 1 HOUR) >= NOW();
+		", array(
+			":idrecovery"=>$idrecovery
+		));
+		if (count($results) === 0)
+		{
+			throw new \Exception("Não foi possível recuperar a senha.");
+		}
+		else
+		{
+			return $results[0];
+		}
 	}
-	public static function setForgotUsed($idrecovery){
+	public static function setForgotUsed($idrecovery)
+	{
 		$sql = new Sql();
-		$sql->query("UPDATE tb_userspassowordsrecoveries SET dtrecovery = NOW() WHERE idrecovery = :idrecovery", array(
+		$sql->query("UPDATE tb_userspasswordsrecoveries SET dtrecovery = NOW() WHERE idrecovery = :idrecovery", array(
 			":idrecovery"=>$idrecovery
 		));
 	}
-
-	public function setPassword($password){
-		$sql= new Sql();
+	public function setPassword($password)
+	{
+		$sql = new Sql();
 		$sql->query("UPDATE tb_users SET despassword = :password WHERE iduser = :iduser", array(
 			":password"=>$password,
 			":iduser"=>$this->getiduser()
 		));
+	}
+	public static function setError($msg)
+	{
+		$_SESSION[User::ERROR] = $msg;
+	}
+	public static function getError()
+	{
+		$msg = (isset($_SESSION[User::ERROR]) && $_SESSION[User::ERROR]) ? $_SESSION[User::ERROR] : '';
+		User::clearError();
+		return $msg;
+	}
+	public static function clearError()
+	{
+		$_SESSION[User::ERROR] = NULL;
+	}
+	public static function setSuccess($msg)
+	{
+		$_SESSION[User::SUCCESS] = $msg;
+	}
+	public static function getSuccess()
+	{
+		$msg = (isset($_SESSION[User::SUCCESS]) && $_SESSION[User::SUCCESS]) ? $_SESSION[User::SUCCESS] : '';
+		User::clearSuccess();
+		return $msg;
+	}
+	public static function clearSuccess()
+	{
+		$_SESSION[User::SUCCESS] = NULL;
+	}
+	public static function setErrorRegister($msg)
+	{
+		$_SESSION[User::ERROR_REGISTER] = $msg;
+	}
+	public static function getErrorRegister()
+	{
+		$msg = (isset($_SESSION[User::ERROR_REGISTER]) && $_SESSION[User::ERROR_REGISTER]) ? $_SESSION[User::ERROR_REGISTER] : '';
+		User::clearErrorRegister();
+		return $msg;
+	}
+	public static function clearErrorRegister()
+	{
+		$_SESSION[User::ERROR_REGISTER] = NULL;
+	}
+	public static function checkLoginExist($login)
+	{
+		$sql = new Sql();
+		$results = $sql->select("SELECT * FROM tb_users WHERE deslogin = :deslogin", [
+			':deslogin'=>$login
+		]);
+		return (count($results) > 0);
+	}
+	public static function getPasswordHash($password)
+	{
+		return password_hash($password, PASSWORD_DEFAULT, [
+			'cost'=>12
+		]);
 	}
 	 
 }
