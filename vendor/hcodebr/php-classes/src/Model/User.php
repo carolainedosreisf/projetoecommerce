@@ -11,6 +11,7 @@ class User extends Model {
 	const ERROR = "UserError";
 	const ERROR_REGISTER = "UserErrorRegister";
 	const SUCCESS = "UserSucesss";
+
 	public static function getFromSession()
 	{
 		$user = new User();
