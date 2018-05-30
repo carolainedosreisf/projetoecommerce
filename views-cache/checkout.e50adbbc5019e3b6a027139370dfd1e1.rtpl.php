@@ -20,7 +20,13 @@
 								<div class="row">
 									<div class="col-md-12">
 	
-										
+										<?php if( $error != '' ){ ?>
+
+										<div class="alert alert-danger">
+											<?php echo htmlspecialchars( $error, ENT_COMPAT, 'UTF-8', FALSE ); ?>
+
+										</div>
+										<?php } ?>
 
 	
 										<div class="woocommerce-billing-fields">
@@ -28,7 +34,7 @@
 											<p id="billing_address_1_field" class="form-row form-row-wide address-field validate-required">
 												<label class="" for="billing_cep_1">Cep <abbr title="required" class="required">*</abbr>
 												</label>
-												<input type="text" value="" placeholder="00000-000" id="billing_cep_1" name="zipcode" class="input-text ">
+												<input type="text" value="<?php echo htmlspecialchars( $cart["deszipcode"], ENT_COMPAT, 'UTF-8', FALSE ); ?>" placeholder="00000-000" id="billing_cep_1" name="zipcode" class="input-text ">
 												<input type="submit" value="Atualizar CEP" id="place_order" class="button alt" formaction="/checkout" formmethod="get">
 											</p>
 											<div class="row">
@@ -36,14 +42,14 @@
 													<p id="billing_address_1_field" class="form-row form-row-wide address-field validate-required">
 														<label class="" for="billing_address_1">Endereço <abbr title="required" class="required">*</abbr>
 														</label>
-														<input type="text" value="" placeholder="Logradouro, número e bairro" id="billing_address_1" name="desaddress" class="input-text ">
+														<input type="text" value="<?php echo htmlspecialchars( $address["desaddress"], ENT_COMPAT, 'UTF-8', FALSE ); ?>" placeholder="Logradouro, número e bairro" id="billing_address_1" name="desaddress" class="input-text ">
 													</p>
 												</div>
 												<div class="col-sm-3">
 													<p id="billing_number_1_field" class="form-row form-row-wide number-field validate-required">
 														<label class="" for="billing_number_1">Número <abbr title="required" class="required">*</abbr>
 														</label>
-														<input type="text" value=">" placeholder="Número" id="billing_address_1" name="desnumber" class="input-text ">
+														<input type="text" value="" placeholder="Número" id="billing_address_1" name="desnumber" class="input-text ">
 													</p>
 												</div>
 											</div>
