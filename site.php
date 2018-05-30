@@ -224,11 +224,12 @@ $app->post("/profile", function(){
 			exit;
 		}
 	}
+	$_POST['iuser'] = $user->getiduser();	
 	$_POST['inadmin'] = $user->getinadmin();
 	$_POST['despassword'] = $user->getdespassword();
 	$_POST['deslogin'] = $_POST['desemail'];
 	$user->setData($_POST);
-	$user->save();
+	$user->update();
 	User::setSuccess("Dados alterados com sucesso!");
 	header('Location: /profile');
 	exit;
