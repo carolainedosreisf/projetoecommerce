@@ -226,6 +226,7 @@ class User extends Model {
 	{
 		$_SESSION[User::ERROR] = NULL;
 	}
+
 	public static function setSuccess($msg)
 	{
 		$_SESSION[User::SUCCESS] = $msg;
