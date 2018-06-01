@@ -8,7 +8,7 @@ class Address extends Model {
 	{
 		$nrcep = str_replace("-", "", $nrcep);
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "http://viacep.com.br/ws/$nrcep/json/");
+		curl_setopt($ch, CURLOPT_URL, "https://viacep.com.br/ws/$nrcep/json/");
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		$data = json_decode(curl_exec($ch), true);
