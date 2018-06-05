@@ -1,18 +1,14 @@
-<?php
+<?php 
 namespace Hcode;
-
 use Rain\Tpl;
 use PHPMailer\PHPMailer\PHPMailer;
-
-class Mailer{
-    const USERNAME = "carolainepikachu@gmail.com";
+class Mailer {
+	
+	const USERNAME = "carolainepikachu@gmail.com";
     const PASSWORD = "pizzariapizzria";
     const NAME_FROM = "Hcode Store";
-
-    private $mail;
-
-
-    public function __construct($toAddress, $toName, $subject, $tplName, $data = array())
+	private $mail;
+	public function __construct($toAddress, $toName, $subject, $tplName, $data = array())
 	{
 		$config = array(
 			"tpl_dir"       => $_SERVER["DOCUMENT_ROOT"]."/views/email/",
@@ -71,4 +67,4 @@ class Mailer{
 		return $this->mail->send();
 	}
 }
-?>
+ ?>

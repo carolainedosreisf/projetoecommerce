@@ -1,5 +1,7 @@
 <?php 
-    namespace Hcode;
+//classe pai do filho user
+
+    namespace Hcode;//serve pra dizer onde a classe esta
 
     class Model {
         private $values = [];

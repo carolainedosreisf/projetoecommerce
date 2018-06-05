@@ -1,6 +1,7 @@
-<?php 
+<?php
+//arquivo que faz a conexão com o banco d dados
 
-namespace Hcode\DB;
+namespace Hcode\DB;//serve pra dizer onde a classe esta
 
 class Sql {
 

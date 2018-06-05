@@ -21,9 +21,9 @@
 							<div class="row">
 								<div class="col-md-12">
 
-									{if="$checkoutError != ''"}
+									{if="$error != ''"}
 									<div class="alert alert-danger">
-										{$checkoutError}
+										{$error}
 									</div>
 									{/if}
 
@@ -33,7 +33,7 @@
 											<label class="" for="billing_cep_1">Cep <abbr title="required" class="required">*</abbr>
 											</label>
 											<input type="text" value="{$cart.deszipcode}" placeholder="00000-000" id="billing_cep_1" name="zipcode" class="input-text ">
-											<input type="submit" value="Atualizar CEP" id="place_order" class="button alt" formaction="/checkout" formmethod="get">
+											<input type="submit" value="Atualizar CEP" id="place_order" class="button alt" formaction="/cart/freight" formmethod="post">
 										</p>
 										<div class="row">
 											<div class="col-sm-9">
@@ -89,7 +89,7 @@
 															{$value.desproduct} <strong class="product-quantity">× {$value.nrqtd}</strong> 
 														</td>
 														<td class="product-total">
-															<span class="amount">R${function="format_real($value.vltotal)"}</span>
+															<span class="amount">R${function="formatPrice($value.vltotal)"}</span>
 														</td>
                                                     </tr>
                                                     {/loop}
@@ -97,19 +97,19 @@
 												<tfoot>
 													<tr class="cart-subtotal">
 														<th>Subtotal</th>
-														<td><span class="amount">R${function="format_real($cart.vlsubtotal)"}</span>
+														<td><span class="amount">R${function="formatPrice($cart.vlsubtotal)"}</span>
 														</td>
 													</tr>
 													<tr class="shipping">
 														<th>Frete</th>
 														<td>
-															R${function="format_real($cart.vlfreight)"}
+															R${function="formatPrice($cart.vlfreight)"}
 															<input type="hidden" class="shipping_method" value="free_shipping" id="shipping_method_0" data-index="0" name="shipping_method[0]">
 														</td>
 													</tr>
 													<tr class="order-total">
 														<th>Total do Pedido</th>
-														<td><strong><span class="amount">R${function="format_real($cart.vltotal)"}</span></strong> </td>
+														<td><strong><span class="amount">R${function="formatPrice($cart.vltotal)"}</span></strong> </td>
 													</tr>
 												</tfoot>
 											</table>

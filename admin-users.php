@@ -1,66 +1,124 @@
-<?php
+<?php 
+//este arquivo faz o CRUD, edita adiciona e exclui,  na parte dos usuarios que contem na pagina da administração
+
+//chama as classes
 use \Hcode\PageAdmin;
 use \Hcode\Model\User;
-
-$app->get("/admin/users", function(){
-	User::verifylogin();
-	$users = User::listAll();
+$app->get("/admin/users/:iduser/password", function($iduser){
+	User::verifyLogin();
+	$user = new User();
+	$user->get((int)$iduser);
 	$page = new PageAdmin();
-	$page->setTpl("users", array(
-		"users"=>$users
+	$page->setTpl("users-password", [
+		"user"=>$user->getValues(),
+		"msgError"=>User::getError(),
+		"msgSuccess"=>User::getSuccess()
+	]);
+});
+$app->post("/admin/users/:iduser/password", function($iduser){
+	User::verifyLogin();
+	if (!isset($_POST['despassword']) || $_POST['despassword']==='') {
+		User::setError("Preencha a nova senha.");
+		header("Location: /admin/users/$iduser/password");
+		exit;
+	}
+	if (!isset($_POST['despassword-confirm']) || $_POST['despassword-confirm']==='') {
+		User::setError("Preencha a confirmação da nova senha.");
+		header("Location: /admin/users/$iduser/password");
+		exit;
+	}
+	if ($_POST['despassword'] !== $_POST['despassword-confirm']) {
+		User::setError("Confirme corretamente as senhas.");
+		header("Location: /admin/users/$iduser/password");
+		exit;
+	}
+	$user = new User();
+	$user->get((int)$iduser);
+	$user->setPassword(User::getPasswordHash($_POST['despassword']));
+	User::setSuccess("Senha alterada com sucesso.");
+	header("Location: /admin/users/$iduser/password");
+	exit;
+});
+
+//rota que joga na tela e acessa os usuarios existentes
+
+$app->get("/admin/users", function() {
+	User::verifyLogin();//se estiver logado execute daqui pra baixo:
+	$search = (isset($_GET['search'])) ? $_GET['search'] : "";//busca
+	$page = (isset($_GET['page'])) ? (int)$_GET['page'] : 1;
+	if ($search != '') {
+		$pagination = User::getPageSearch($search, $page);//metodo da classe User
+	} else {
+		$pagination = User::getPage($page);//metodo da classe User
+	}
+	$pages = [];
+	for ($x = 0; $x < $pagination['pages']; $x++)
+	{
+		array_push($pages, [
+			'href'=>'/admin/users?'.http_build_query([
+				'page'=>$x+1,
+				'search'=>$search//busca
+			]),
+			'text'=>$x+1
+		]);
+	}
+	$page = new PageAdmin();
+	$page->setTpl("users", array(//usa esse template
+		"users"=>$pagination['data'],//paginação
+		"search"=>$search,//busca
+		"pages"=>$pages
 	));
 });
 
-$app->get("/admin/create", function(){
-	User::verifylogin();
-	$page = new PageAdmin();
-	$page->setTpl("users-create");
-});
-$app->get("/admin/users/:iduser/delete", function($iduser){
-	User::verifylogin();
-	$user= new User();
-	$user->get((int)$iduser);
-	$user->delete();
-	header("Location: /admin/users");
-	exit;
-});
-$app->get('/admin/users/:iduser', function($iduser){
- 
+//rota que é jogada na tela para criar um usuario
+$app->get("/admin/users/create", function() {
 	User::verifyLogin();
-  
-	$user = new User();
-  
-	$user->get((int)$iduser);
-  
 	$page = new PageAdmin();
-  
-	$page ->setTpl("users-update", array(
-		 "user"=>$user->getValues()
-	 ));
-  
- });
-
-
-$app->post("/admin/users/create", function() {
-    User::verifyLogin();
-    $user = new User();
-    $_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
-    $user->setData($_POST);
-    $user->save();
-    header("Location: /admin/users");
-    exit;
- 
+	$page->setTpl("users-create");//html
 });
 
-
-
-$app->post("/admin/users/:iduser", function($iduser){
-	User::verifylogin();
+//rota que é jogada na tela e executa a ação para deletar um usuario
+$app->get("/admin/users/:iduser/delete", function($iduser) {
+	User::verifyLogin();	
 	$user = new User();
-	$user->get((int)$iduser);
-	$user->setData($_POST);
-	$user->update();
-	header("Location: /admin/users");
+	$user->get((int)$iduser);//medoto da classe user
+	$user->delete();//metodo da class user
+	header("Location: /admin/users");//html
 	exit;
 });
-?>
+
+//rota que é jogada na tela para editar um usuario
+$app->get("/admin/users/:iduser", function($iduser) {
+	User::verifyLogin();
+	$user = new User();
+	$user->get((int)$iduser);//metodo da classe User
+	$page = new PageAdmin();
+	$page->setTpl("users-update", array(//html
+		"user"=>$user->getValues()//arquivo model
+	));
+});
+
+//rota da ação do formulario
+$app->post("/admin/users/create", function() {
+	User::verifyLogin();
+	$user = new User();
+	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;//se for definido no formulario vale um se não é 0
+	$_POST['despassword'] = User::getPassswordHash($_POST['despassword']);/*a senha é criptografada com o esse metodo da classe User */
+	$user->setData($_POST);//arquivo model
+	$user->save();//arquivo user
+	header("Location: /admin/users");//rota get do mesmo
+	exit;
+});
+
+//rota da ação do formulario
+$app->post("/admin/users/:iduser", function($iduser) {
+	User::verifyLogin();
+	$user = new User();
+	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;//se for definido no formulario vale um se não é 0
+	$user->get((int)$iduser);//metodo da classe User
+	$user->setData($_POST);//arquivo model
+	$user->update();//arquivo user
+	header("Location: /admin/users");//rota get do mesmo
+	exit;
+});
+ ?>

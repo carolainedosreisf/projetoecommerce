@@ -269,14 +269,15 @@ $app->post("/forgot/reset", function(){
 });
 
 $app->get("/profile", function(){
-	User::verifyLogin(false);
-	$user= User::getFromSession();
-	$page = new Page();
-	$page->setTpl("profile",[
-		'user'=>$user->getValues(),
-		'profileMsg'=>User::getSuccess(),
-		'profileError'=>User::getError()
-	]);
+    User::verifyLogin(false);
+    $user= User::getFromSession();
+    $page = new Page();
+
+    $page->setTpl("profile",[
+        'user'=>$user->getValues(),
+        'profileMsg'=>User::getSuccess(),
+        'profileError'=>User::getError()
+    ]);
 });
 
 $app->post("/profile", function(){
@@ -300,12 +301,13 @@ $app->post("/profile", function(){
 			exit;
 		}
 	}
-	$_POST['iuser'] = $user->getiduser();	
+	$_POST['iduser'] = $user->getiduser(); 
 	$_POST['inadmin'] = $user->getinadmin();
 	$_POST['despassword'] = $user->getdespassword();
 	$_POST['deslogin'] = $_POST['desemail'];
 	$user->setData($_POST);
 	$user->update();
+	$_SESSION[User::SESSION] = $user->getValues();
 	User::setSuccess("Dados alterados com sucesso!");
 	header('Location: /profile');
 	exit;
@@ -440,6 +442,7 @@ $app->post("/profile/change-password", function(){
 	}
 	$user->setdespassword($_POST['new_pass']);
 	$user->update();
+	$_SESSION[User::SESSION] = $user->getValues();
 	User::setSuccess("Senha alterada com sucesso.");
 	header("Location: /profile/change-password");
 	exit;
