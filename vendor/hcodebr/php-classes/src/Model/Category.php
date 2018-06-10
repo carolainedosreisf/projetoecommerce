@@ -1,4 +1,5 @@
 <?php 
+//classes
 namespace Hcode\Model;
 use \Hcode\DB\Sql;
 use \Hcode\Model;
@@ -9,6 +10,8 @@ class Category extends Model {
 		$sql = new Sql();
 		return $sql->select("SELECT * FROM tb_categories ORDER BY descategory");
 	}
+
+	//metodo que salva a as categorias
 	public function save()
 	{
 		$sql = new Sql();
@@ -17,8 +20,10 @@ class Category extends Model {
 			":descategory"=>$this->getdescategory()
 		));
 		$this->setData($results[0]);
-		Category::updateFile();
+		Category::updateFile();//metodo desse propio arquivo
 	}
+
+	//seleciona a tabela de categorias no banco
 	public function get($idcategory)
 	{
 		$sql = new Sql();
@@ -27,14 +32,18 @@ class Category extends Model {
 		]);
 		$this->setData($results[0]);
 	}
+
+	//metodo para apgar a categoria
 	public function delete()
 	{
 		$sql = new Sql();
 		$sql->query("DELETE FROM tb_categories WHERE idcategory = :idcategory", [
 			':idcategory'=>$this->getidcategory()
 		]);
-		Category::updateFile();
+		Category::updateFile();//metodo desse propio arquivo
 	}
+
+	//metodo que joga no html da loja as categorias no footer dinamicamente
 	public static function updateFile()
 	{
 		$categories = Category::listAll();
@@ -44,9 +53,12 @@ class Category extends Model {
 		}
 		file_put_contents($_SERVER['DOCUMENT_ROOT'] . DIRECTORY_SEPARATOR . "views" . DIRECTORY_SEPARATOR . "categories-menu.html", implode('', $html));
 	}
+
+	//Tras todos os produtos do banco de dados
 	public function getProducts($related = true)
 	{
 		$sql = new Sql();
+		//produtos que estão relacionados com a categoria
 		if ($related === true) {
 			return $sql->select("
 				SELECT * FROM tb_products WHERE idproduct IN(
@@ -58,6 +70,9 @@ class Category extends Model {
 			", [
 				':idcategory'=>$this->getidcategory()
 			]);
+
+		//produtos que não estão relacionados com a categoria
+			
 		} else {
 			return $sql->select("
 				SELECT * FROM tb_products WHERE idproduct NOT IN(
@@ -71,6 +86,8 @@ class Category extends Model {
 			]);
 		}
 	}
+
+	//paginação, itens por pagina
 	public function getProductsPage($page = 1, $itemsPerPage = 8)
 	{
 		$start = ($page - 1) * $itemsPerPage;
@@ -92,6 +109,8 @@ class Category extends Model {
 			'pages'=>ceil($resultTotal[0]["nrtotal"] / $itemsPerPage)
 		];
 	}
+
+	//metodo que adiciona o produto a categoria
 	public function addProduct(Product $product)
 	{
 		$sql = new Sql();
@@ -100,6 +119,8 @@ class Category extends Model {
 			':idproduct'=>$product->getidproduct()
 		]);
 	}
+
+	//metodo que remove o produto da categoria
 	public function removeProduct(Product $product)
 	{
 		$sql = new Sql();
@@ -108,7 +129,7 @@ class Category extends Model {
 			':idproduct'=>$product->getidproduct()
 		]);
 	}
-			
+		//lista todas as categorias	
 	public static function getPage($page = 1, $itemsPerPage = 10)
 	{
 		$start = ($page - 1) * $itemsPerPage;
@@ -126,6 +147,8 @@ class Category extends Model {
 			'pages'=>ceil($resultTotal[0]["nrtotal"] / $itemsPerPage)
 		];
 	}
+
+	//lista as categorias da busca
 	public static function getPageSearch($search, $page = 1, $itemsPerPage = 10)
 	{
 		$start = ($page - 1) * $itemsPerPage;

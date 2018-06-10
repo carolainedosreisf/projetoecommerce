@@ -25,9 +25,11 @@ class Address extends Model {
 			$this->setdescity($data['localidade']);
 			$this->setdesstate($data['uf']);
 			$this->setdescountry('Brasil');
-			$this->setdeszipcode($nrcep);
+			$this->setdeszipcode($nrcep); 
 		}
 	}
+
+	//salva o endreço da compra no banco de dados
 	public function save()
 	{
 		$sql = new Sql();
@@ -44,19 +46,22 @@ class Address extends Model {
 			':desdistrict'=> $this->getdesdistrict()
 		]);
 		if (count($results) > 0) {
-			$this->setData($results[0]);
+			$this->setData($results[0]);//metodo da classe pai(model)
 		}
 	}
+	//inicia a sessão do erro
 	public static function setMsgError($msg)
 	{
 		$_SESSION[Address::SESSION_ERROR] = $msg;
 	}
+	//pega o erro
 	public static function getMsgError()
 	{
 		$msg = (isset($_SESSION[Address::SESSION_ERROR])) ? $_SESSION[Address::SESSION_ERROR] : "";
 		Address::clearMsgError();
 		return $msg;
 	}
+	//limpa a sessão do erro
 	public static function clearMsgError()
 	{
 		$_SESSION[Address::SESSION_ERROR] = NULL;

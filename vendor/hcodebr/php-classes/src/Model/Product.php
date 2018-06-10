@@ -1,5 +1,7 @@
 <?php 
-namespace Hcode\Model;
+namespace Hcode\Model;//serve para dizer onde a classe esta
+
+//classes
 use \Hcode\DB\Sql;
 use \Hcode\Model;
 use \Hcode\Mailer;
@@ -9,6 +11,8 @@ class Product extends Model {
 		$sql = new Sql();
 		return $sql->select("SELECT * FROM tb_products ORDER BY desproduct");
 	}
+
+	//este metodo checka a lista de produtos
 	public static function checkList($list)
 	{
 		foreach ($list as &$row) {
@@ -19,6 +23,8 @@ class Product extends Model {
 		}
 		return $list;
 	}
+
+	//metodo que salva os produtos
 	public function save()
 	{
 		$sql = new Sql();
@@ -34,6 +40,8 @@ class Product extends Model {
 		));
 		$this->setData($results[0]);
 	}
+
+	//metodo que seleciona a tabela dos produtos no banco de dados
 	public function get($idproduct)
 	{
 		$sql = new Sql();
@@ -42,6 +50,8 @@ class Product extends Model {
 		]);
 		$this->setData($results[0]);
 	}
+
+	//metodo que apaga os produtos
 	public function delete()
 	{
 		$sql = new Sql();
@@ -49,6 +59,8 @@ class Product extends Model {
 			':idproduct'=>$this->getidproduct()
 		]);
 	}
+
+	//update da imagem do produto
 	public function checkPhoto()
 	{
 		if (file_exists(
@@ -60,17 +72,21 @@ class Product extends Model {
 			$this->getidproduct() . ".jpg"
 			)) {
 			$url = "/res/site/img/products/" . $this->getidproduct() . ".jpg";
+	//se não existir a foto  ele trara uma foto padrão			
 		} else {
 			$url = "/res/site/img/product.jpg";
 		}
 		return $this->setdesphoto($url);
 	}
+
+	//sob-escrevendo o metodo que ja existia na class model
 	public function getValues()
 	{
-		$this->checkPhoto();
+		$this->checkPhoto();//medoto da classe desse propio arquivo
 		$values = parent::getValues();
 		return $values;
 	}
+	//metodo que transformara a imagem eno formato jpg
 	public function setPhoto($file)
 	{
 		$extension = explode('.', $file['name']);
@@ -95,8 +111,10 @@ class Product extends Model {
 			$this->getidproduct() . ".jpg";
 		imagejpeg($image, $dist);
 		imagedestroy($image);
-		$this->checkPhoto();
+		$this->checkPhoto();//medoto da classe desse propio arquivo
 	}
+
+	//metodo que busca a url correta
 	public function getFromURL($desurl)
 	{
 		$sql = new Sql();
@@ -105,6 +123,8 @@ class Product extends Model {
 		]);
 		$this->setData($rows[0]);
 	}
+	/*metodo que ira mostar as categorias de um produto, ex: um produto especifico  ao clicar nele voce vera seus detalhes
+	e tambem verá quais as categorias que ele pertence*/
 	public function getCategories()
 	{
 		$sql = new Sql();
@@ -114,6 +134,8 @@ class Product extends Model {
 			':idproduct'=>$this->getidproduct()
 		]);
 	}
+
+	//lista os produtos
 	public static function getPage($page = 1, $itemsPerPage = 10)
 	{
 		$start = ($page - 1) * $itemsPerPage;
@@ -131,6 +153,8 @@ class Product extends Model {
 			'pages'=>ceil($resultTotal[0]["nrtotal"] / $itemsPerPage)
 		];
 	}
+
+	//lista os produtos da busca
 	public static function getPageSearch($search, $page = 1, $itemsPerPage = 10)
 	{
 		$start = ($page - 1) * $itemsPerPage;

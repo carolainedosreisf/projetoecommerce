@@ -1,15 +1,23 @@
 <?php 
-namespace Hcode\Model;
+namespace Hcode\Model;//serve pra dizer onde esta a classe
+
+//classes
 use \Hcode\DB\Sql;
 use \Hcode\Model;
 use \Hcode\Mailer;
 use \Hcode\Model\User;
+
+//classe herdeira
 class Cart extends Model {
-	const SESSION = "Cart";
-	const SESSION_ERROR = "CartError";
+	const SESSION = "Cart";//sessão do carrinho
+	const SESSION_ERROR = "CartError";//constante do erro
+
+	//qual o id da sessão?
 	public static function getFromSession()
 	{
 		$cart = new Cart();
+
+		//carrinho esta na sessão?
 		if (isset($_SESSION[Cart::SESSION]) && (int)$_SESSION[Cart::SESSION]['idcart'] > 0) {
 			$cart->get((int)$_SESSION[Cart::SESSION]['idcart']);
 		} else {
@@ -19,21 +27,25 @@ class Cart extends Model {
 					'dessessionid'=>session_id()
 				];
 				if (User::checkLogin(false)) {
-					$user = User::getFromSession();
+					$user = User::getFromSession();//metodo da classe user
 					
 					$data['iduser'] = $user->getiduser();	
 				}
-				$cart->setData($data);
-				$cart->save();
-				$cart->setToSession();
+				$cart->setData($data);//metodo localizado nesse propio arquivo
+				$cart->save();//metodo localizado nesse propio arquivo
+				$cart->setToSession();//metodo localizado nesse propio arquivo
 			}
 		}
 		return $cart;
 	}
+
+	//verifica se a sessão esta aberta
 	public function setToSession()
 	{
 		$_SESSION[Cart::SESSION] = $this->getValues();
 	}
+
+	//verifica se há rigistros no banco de dados
 	public function getFromSessionID()
 	{
 		$sql = new Sql();
@@ -41,9 +53,11 @@ class Cart extends Model {
 			':dessessionid'=>session_id()
 		]);
 		if (count($results) > 0) {
-			$this->setData($results[0]);
+			$this->setData($results[0]);//metodo da classe model
 		}
 	}	
+
+	//metodo que seleciona a tabela do carrinho no banco de dados
 	public function get($idcart)
 	{
 		$sql = new Sql();
@@ -54,6 +68,8 @@ class Cart extends Model {
 			$this->setData($results[0]);
 		}
 	}
+
+	//salva os produtos no carrinho
 	public function save()
 	{
 		$sql = new Sql();
@@ -65,8 +81,10 @@ class Cart extends Model {
 			':vlfreight'=>$this->getvlfreight(),
 			':nrdays'=>$this->getnrdays()
 		]);
-		$this->setData($results[0]);
+		$this->setData($results[0]);//metodo da classe model
 	}
+
+	//metodo que adiciona +1 produto especifico no carrinho
 	public function addProduct(Product $product)
 	{
 		$sql = new Sql();
@@ -74,23 +92,27 @@ class Cart extends Model {
 			':idcart'=>$this->getidcart(),
 			':idproduct'=>$product->getidproduct()
 		]);
-		$this->getCalculateTotal();
+		$this->getCalculateTotal();//metodo localizado nesse propio arquivo
 	}
+
+	//metodo que remove produtos do carrinhocarrinho
 	public function removeProduct(Product $product, $all = false)
 	{
 		$sql = new Sql();
+		//remove tudo
 		if ($all) {
 			$sql->query("UPDATE tb_cartsproducts SET dtremoved = NOW() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL", [
 				':idcart'=>$this->getidcart(),
 				':idproduct'=>$product->getidproduct()
 			]);
+			//remove 1(-)
 		} else {
 			$sql->query("UPDATE tb_cartsproducts SET dtremoved = NOW() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL LIMIT 1", [
 				':idcart'=>$this->getidcart(),
 				':idproduct'=>$product->getidproduct()
 			]);
 		}
-		$this->getCalculateTotal();
+		$this->getCalculateTotal();//metodo localizado nesse propio arquivo
 	}
 	public function getProducts()
 	{
@@ -105,8 +127,10 @@ class Cart extends Model {
 		", [
 			':idcart'=>$this->getidcart()
 		]);
-		return Product::checkList($rows);
+		return Product::checkList($rows);//metodo da classe product
 	}
+
+	//calcular o total a pagar, incluindo todos os produtos que estais compramdo menos o frete
 	public function getProductsTotals()
 	{
 		$sql = new Sql();
@@ -124,13 +148,19 @@ class Cart extends Model {
 			return [];
 		}
 	}
+	//calcula o frete
 	public function setFreight($nrzipcode)
 	{
 		$nrzipcode = str_replace('-', '', $nrzipcode);
-		$totals = $this->getProductsTotals();
+		$totals = $this->getProductsTotals();//metodo desse propio arquivo
+
+		//se altura for menor que 2cm, ela vira 2cm que é o minimo permitido pelo calculo de frete
+		//se o comprimento for menor que 16cm, ela vira 16cm que é o minimo permitido pelo calculo de frete
 		if ($totals['nrqtd'] > 0) {
 			if ($totals['vlheight'] < 2) $totals['vlheight'] = 2;
 			if ($totals['vllength'] < 16) $totals['vllength'] = 16;
+
+			//a direita são strings fixas e padronizadas determinadas pelos correios
 			$qs = http_build_query([
 				'nCdEmpresa'=>'',
 				'sDsSenha'=>'',
@@ -150,48 +180,62 @@ class Cart extends Model {
 			$xml = simplexml_load_file("http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo?".$qs);
 			$result = $xml->Servicos->cServico;
 			if ($result->MsgErro != '') {
-				Cart::setMsgError($result->MsgErro);
+				Cart::setMsgError($result->MsgErro);//metodo desse propio arquivo
 			} else {
-				Cart::clearMsgError();
+				Cart::clearMsgError();//metodo desse propio arquivo
 			}
 			$this->setnrdays($result->PrazoEntrega);
-			$this->setvlfreight(Cart::formatValueToDecimal($result->Valor));
+			$this->setvlfreight(Cart::formatValueToDecimal($result->Valor));//metodo desse propio arquivo
 			$this->setdeszipcode($nrzipcode);
 			$this->save();
 			return $result;
 		} else {
 		}
 	}
+
+	//metodo para formatar os valores
 	public static function formatValueToDecimal($value)
 	{
 		$value = str_replace('.', '', $value);
 		return str_replace(',', '.', $value);
 	}
+
+	//inicia a sessão do erro
 	public static function setMsgError($msg)
 	{
 		$_SESSION[Cart::SESSION_ERROR] = $msg;
 	}
+
+	//pega o erro
 	public static function getMsgError()
 	{
 		$msg = (isset($_SESSION[Cart::SESSION_ERROR])) ? $_SESSION[Cart::SESSION_ERROR] : "";
-		Cart::clearMsgError();
+		Cart::clearMsgError();//metodo desse propio arquivo
 		return $msg;
 	}
+
+	//limpa a sessão do erro
 	public static function clearMsgError()
 	{
 		$_SESSION[Cart::SESSION_ERROR] = NULL;
 	}
+
+	//atualiza o frete automaticamente
 	public function updateFreight()
 	{
 		if ($this->getdeszipcode() != '') {
 			$this->setFreight($this->getdeszipcode());
 		}
 	}
+
+	//esse metodo sob-escreve o original da classe pai
 	public function getValues()
 	{
-		$this->getCalculateTotal();
-		return parent::getValues();
+		$this->getCalculateTotal();//metodo desse propio arquivo
+		return parent::getValues();//metodo da classe pai(model)
 	}
+
+	//calcular o total a pagar, incluindo todos os produtos que estais compramdo mais o frete
 	public function getCalculateTotal()
 	{
 		$this->updateFreight();

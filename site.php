@@ -1,4 +1,7 @@
 <?php 
+//arquivo com as rotas da loja em si
+
+//classes
 use \Hcode\Page;
 use \Hcode\Model\Product;
 use \Hcode\Model\Category;
@@ -7,19 +10,24 @@ use \Hcode\Model\Address;
 use \Hcode\Model\User;
 use \Hcode\Model\Order;
 use \Hcode\Model\OrderStatus;
+
+
 $app->get('/', function() {
-    
-	$products = Product::listAll();
+	$products = Product::listAll();//busca todos os produtos que estão no banco
 	$page = new Page();
-	$page->setTpl("index", [
-		'products'=>Product::checkList($products)
+	$page->setTpl("index", [//html
+		'products'=>Product::checkList($products)//metodo da classe product
 	]);
 });
+
+
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
 $app->get("/categories/:idcategory", function($idcategory){
 	$page = (isset($_GET['page'])) ? (int)$_GET['page'] : 1;
 	$category = new Category();
 	$category->get((int)$idcategory);
-	$pagination = $category->getProductsPage($page);
+	$pagination = $category->getProductsPage($page);//metodo da classe category
 	$pages = [];
 	for ($i=1; $i <= $pagination['pages']; $i++) { 
 		array_push($pages, [
@@ -28,79 +36,98 @@ $app->get("/categories/:idcategory", function($idcategory){
 		]);
 	}
 	$page = new Page();
-	$page->setTpl("category", [
-		'category'=>$category->getValues(),
+	$page->setTpl("category", [//html
+		'category'=>$category->getValues(),//metodo da classe product
 		'products'=>$pagination["data"],
 		'pages'=>$pages
 	]);
 });
+
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
 $app->get("/products/:desurl", function($desurl){
 	$product = new Product();
-	$product->getFromURL($desurl);
+	$product->getFromURL($desurl);//metodo da classe product
 	$page = new Page();
-	$page->setTpl("product-detail", [
-		'product'=>$product->getValues(),
-		'categories'=>$product->getCategories()
+	$page->setTpl("product-detail", [//html
+		'product'=>$product->getValues(),//metodo da classe product
+		'categories'=>$product->getCategories()//metodo da classe product
 	]);
 });
+
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
 $app->get("/cart", function(){
-	$cart = Cart::getFromSession();
+	$cart = Cart::getFromSession();//metodo da classe cart
 	$page = new Page();
 	
-	$page->setTpl("cart", [
-		'cart'=>$cart->getValues(),
-		'products'=>$cart->getProducts(),
-		'error'=>$cart->getCartError()
+	$page->setTpl("cart", [//html
+		'cart'=>$cart->getValues(),//metodo da classe cart
+		'products'=>$cart->getProducts(),//metodo da classe cart
+		'error'=>$cart->getCartError()//metodo da classe cart
 	]);
 });
+
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
 $app->get("/cart/:idproduct/add", function($idproduct){
 	$product = new Product();
-	$product->get((int)$idproduct);
-	$cart = Cart::getFromSession();
+	$product->get((int)$idproduct);//metodo da classe product
+	$cart = Cart::getFromSession();//metodo da classe cart
 	$qtd = (isset($_GET['qtd'])) ? (int)$_GET['qtd'] : 1;
 	for ($i = 0; $i < $qtd; $i++) {
 		
 		$cart->addProduct($product);
 	}
-	header("Location: /cart");
-	exit;
-});
-$app->get("/cart/:idproduct/minus", function($idproduct){
-	$product = new Product();
-	$product->get((int)$idproduct);
-	$cart = Cart::getFromSession();
-	$cart->removeProduct($product);
-	header("Location: /cart");
-	exit;
-});
-$app->get("/cart/:idproduct/remove", function($idproduct){
-	$product = new Product();
-	$product->get((int)$idproduct);
-	$cart = Cart::getFromSession();
-	$cart->removeProduct($product, true);
-	header("Location: /cart");
-	exit;
-});
-$app->post("/cart/freight", function(){
-	$nrzipcode = str_replace("-", "", $_POST['zipcode']);
-	$cart = Cart::getFromSession();
-	$cart->setFreight($nrzipcode);
-	header("Location: /cart");
+	header("Location: /cart");//retornara para essa rota
 	exit;
 });
 
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
+$app->get("/cart/:idproduct/minus", function($idproduct){
+	$product = new Product();
+	$product->get((int)$idproduct);//metodo da classe product
+	$cart = Cart::getFromSession();//metodo da classe cart
+	$cart->removeProduct($product);//metodo da classe cart
+	header("Location: /cart");//retornara para essa rota
+	exit;
+});
+
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
+$app->get("/cart/:idproduct/remove", function($idproduct){
+	$product = new Product();
+	$product->get((int)$idproduct);//metodo da classe product
+	$cart = Cart::getFromSession();//metodo da classe cart
+	$cart->removeProduct($product, true);//metodo da classe cart
+	header("Location: /cart");//retornara a essa rota
+	exit;
+});
+
+//rota que é jogada na tela
+//rota que é chamda pelo <a> do html
+$app->post("/cart/freight", function(){
+	$nrzipcode = str_replace("-", "", $_POST['zipcode']);
+	$cart = Cart::getFromSession();//metodo da classe cart
+	$cart->setFreight($nrzipcode);//metodo da classe cart
+	header("Location: /cart");//rota que retornara
+	exit;
+});
+
+//rota que é jogada na tela
 $app->get("/checkout", function(){
-	User::verifyLogin(false);
+	User::verifyLogin(false);//evita que o cliente acesse o login do admin
 	$address = new Address();
-	$cart = Cart::getFromSession();
+	$cart = Cart::getFromSession();//metodo da classe cart
 	if (isset($_GET['zipcode'])) {
 		$_GET['zipcode'] = $cart->getdeszipcode();
 	}
 	if (isset($_GET['zipcode'])) {
-		$address->loadFromCEP($_GET['zipcode']);
-		$cart->setdeszipcode($_GET['zipcode']);
-		$cart->save();
-		$cart->getCalculateTotal();
+		$address->loadFromCEP($_GET['zipcode']);//metodo da classe address
+		$cart->setdeszipcode($_GET['zipcode']);//metodo da classecart
+		$cart->save();//metodo da classe cart
+		$cart->getCalculateTotal();//metodo da classe cart
 	}
 	if (!$address->getdesaddress()) $address->setdesaddress('');
 	if (!$address->getdescomplement()) $address->setdescomplement('');
@@ -111,96 +138,151 @@ $app->get("/checkout", function(){
 	if (!$address->getdeszipcode()) $address->setdeszipcode('');
 	if (!$address->getdestrict()) $address->setdesnumber('');
 	$page = new Page();
-	$page->setTpl("checkout", [
+	$page->setTpl("checkout", [//html
 		'cart'=>$cart->getValues(),
-		'address'=>$address->getValues(),
-		'products'=>$cart->getProducts(),
-		'error'=>Address::getMsgError()
+		'address'=>$address->getValues(),//metodo da classe address
+		'products'=>$cart->getProducts(),//metodo da classe cart
+		'error'=>Address::getMsgError()//metodo da classe address
 	]);
 });
+
+//rota que é chamada pelo formulario
 $app->post("/checkout", function(){
 	User::verifyLogin(false);
 	if (!isset($_POST['zipcode']) || $_POST['zipcode'] === '') {
-		Address::setMsgError("Informe o CEP.");
-		header('Location: /checkout');
+		Address::setMsgError("Informe o CEP.");//metodo da classe address
+		header('Location: /checkout');//rota que retornara
 		exit;
 	}
 	if (!isset($_POST['desaddress']) || $_POST['desaddress'] === '') {
-		Address::setMsgError("Informe o endereço.");
-		header('Location: /checkout');
+		Address::setMsgError("Informe o endereço.");//metodo da classeaddress
+		header('Location: /checkout');//rota que retornara
 		exit;
 	}
 	if (!isset($_POST['desdistrict']) || $_POST['desdistrict'] === '') {
-		Address::setMsgError("Informe o bairro.");
-		header('Location: /checkout');
+		Address::setMsgError("Informe o bairro.");//metodo da classe address
+		header('Location: /checkout');//rota que retornara
 		exit;
 	}
 	if (!isset($_POST['descity']) || $_POST['descity'] === '') {
-		Address::setMsgError("Informe a cidade.");
-		header('Location: /checkout');
+		Address::setMsgError("Informe a cidade.");//metodo da classe address
+		header('Location: /checkout');//rota que retornara
 		exit;
 	}
 	if (!isset($_POST['desstate']) || $_POST['desstate'] === '') {
-		Address::setMsgError("Informe o estado.");
-		header('Location: /checkout');
+		Address::setMsgError("Informe o estado.");//metodo da classe address
+		header('Location: /checkout');//rota que retornara
 		exit;
 	}
 	if (!isset($_POST['descountry']) || $_POST['descountry'] === '') {
-		Address::setMsgError("Informe o país.");
-		header('Location: /checkout');
+		Address::setMsgError("Informe o país.");//metodo da classe address
+		header('Location: /checkout');//rota que retornara
 		exit;
 	}
-	$user = User::getFromSession();
+	$user = User::getFromSession();//metodo da classe user
 	$address = new Address();
 	$_POST['deszipcode'] = $_POST['zipcode'];
 	$_POST['idperson'] = $user->getidperson();
 	$address->setData($_POST);
 	$address->save();
-	$cart = Cart::getFromSession();
-	$cart->getCalculateTotal();
+	$cart = Cart::getFromSession();//metodo da classe cart
+	$cart->getCalculateTotal();//metodo da classe cart
 	$order = new Order();
-	$order->setData([
+	$order->setData([//metodo da classe order
 		'idcart'=>$cart->getidcart(),
 		'idaddress'=>$address->getidaddress(),
 		'iduser'=>$user->getiduser(),
 		'idstatus'=>OrderStatus::EM_ABERTO,
 		'vltotal'=>$cart->getvltotal()
 	]);
-	$order->save();
-	header("Location: /order/".$order->getidorder()); 
+	$order->save();//metodo da classe order
+	switch ((int)$_POST['payment-method']) {
+		case 1:
+		header("Location: /order/".$order->getidorder()."/pagseguro");
+		break;
+		case 2:
+		header("Location: /order/".$order->getidorder()."/paypal");
+		break;
+	}
 	exit;
 });
 
 
+//rota que é jogada na tela e que é pegada pelo <a> do html
+$app->get("/order/:idorder/pagseguro", function($idorder){
+	User::verifyLogin(false);
+	$order = new Order();
+	$order->get((int)$idorder);//metodo da classe order
+	$cart = $order->getCart();//metodo da classe order
+	$page = new Page([
+		'header'=>false,
+		'footer'=>false
+	]);
+	$page->setTpl("payment-pagseguro", [
+		'order'=>$order->getValues(),//metodo da classe order
+		'cart'=>$cart->getValues(),//metodo da classe cart
+		'products'=>$cart->getProducts(),//metodo da classe cart
+		'phone'=>[
+			'areaCode'=>substr($order->getnrphone(), 0, 2),
+			'number'=>substr($order->getnrphone(), 2, strlen($order->getnrphone()))
+		]
+	]);
+});
 
+//rota que é jogada na tela e que é pegada pelo <a> do html
+$app->get("/order/:idorder/paypal", function($idorder){
+	User::verifyLogin(false);
+	$order = new Order();
+	$order->get((int)$idorder);
+	$cart = $order->getCart();
+	$page = new Page([
+		'header'=>false,
+		'footer'=>false
+	]);
+	$page->setTpl("payment-paypal", [
+		'order'=>$order->getValues(),//metodo da classe order
+		'cart'=>$cart->getValues(),//metodo da classe cart
+		'products'=>$cart->getProducts()//metodo da classe order
+	]);
+});
+
+//rota que é jogada na tela
 $app->get("/login", function(){;
 	$page = new Page();
-	$page->setTpl("login",[
-		'error'=>User::getError(),
-		'errorRegister'=>User::getErrorRegister(),
+	$page->setTpl("login",[//html
+		'error'=>User::getError(),//metodo da classe user
+		'errorRegister'=>User::getErrorRegister(),//metodo da classe user
 		'registerValues'=>(isset($_SESSION['registerValues'])) ? $_SESSION['registerValues'] : ['name'=>'', 'email'=>'', 'phone'=>'']
 	]);
 	exit;
 });
 
+
+//rota que  é chamda pelo formulario
 $app->post("/login", function(){
 	try{
-		User::login($_POST['login'], $_POST['password']);
+		User::login($_POST['login'], $_POST['password']);//metodo da classe user
 	}catch(Exception $e){
-		User::setError($e->getMessage());
+		User::setError($e->getMessage());//metodo da classe user
 	}
-	header("Location: /checkout");
+	header("Location: /checkout");//rota que retornara
 	exit;
 	
 });
 
+
+//rota que é jogada na tela 
+//rota que é chamda pelo <a> do html
+
 $app->get("/logout", function(){
-	User::logout();
-	header("Location:/login");
+	User::logout();//metodo da classe user
+	header("Location:/login");//rota que retornara
 	exit;
 });
+
+//rota que é chamda pelo formulario
 $app->post("/register", function(){
-	$_SESSION['registerValues'] = $_POST;
+	$_SESSION['registerValues'] = $_POST;/*sessão para não perder os dados digitados apos dar um erro */
 	if (!isset($_POST['name']) || $_POST['name'] == '') {
 		User::setErrorRegister("Preencha o seu nome.");
 		header("Location: /login");
@@ -222,7 +304,7 @@ $app->post("/register", function(){
 		exit;
 	}
 	$user = new User();
-	$user->setData([
+	$user->setData([//metodo da classe model
 		'inadmin'=>0,
 		'deslogin'=>$_POST['email'],
 		'desperson'=>$_POST['name'],
@@ -230,74 +312,89 @@ $app->post("/register", function(){
 		'despassword'=>$_POST['password'],
 		'nrphone'=>$_POST['phone']
 	]);
-	$user->save();
-	User::login($_POST['email'], $_POST['password']);
-	header('Location: /checkout');
+	$user->save();//metodo da classe user
+	User::login($_POST['email'], $_POST['password']);//metodo da classe user
+	header('Location: /checkout');//retornara para essa rota
 	exit;
 });
 
+//rota do forgot para digitar o email que é jogada na tela 
 $app->get("/forgot", function() {
 	$page = new Page();
-	$page->setTpl("forgot1");	
+	$page->setTpl("forgot1");	//HTML
 });
+
+//rota que é chamado no <a> do html
 $app->post("/forgot", function(){
-	$user = User::getForgot($_POST["email"], false);
-	header("Location: /forgot/sent");
+	$user = User::getForgot($_POST["email"], false);/*metodo da classe user, //o false evita que o cliente descubra a rota do admin pra recuperar a senha */
+	header("Location: /forgot/sent");//rota que retornara
 	exit;
 });
+
+//rota do forgot dizendo que o email foi enviado jogando na tela
 $app->get("/forgot/sent", function(){
 	$page = new Page();
-	$page->setTpl("forgot-sent1");	
+	$page->setTpl("forgot-sent1");	//html
 });
+
+//rota para digitar nova senha que é jogada na tela
 $app->get("/forgot/reset", function(){
-	$user = User::validForgotDecrypt($_GET["code"]);
+	$user = User::validForgotDecrypt($_GET["code"]);//metodo da classe user
 	$page = new Page();
-	$page->setTpl("forgot-reset1", array(
+	$page->setTpl("forgot-reset1", array(//html
 		"name"=>$user["desperson"],
 		"code"=>$_GET["code"]
 	));
 });
+
+//rota para digitar nova senha que é jogada na tela
 $app->post("/forgot/reset", function(){
-	$forgot = User::validForgotDecrypt($_POST["code"]);	
-	User::setForgotUsed($forgot["idrecovery"]);
+	$forgot = User::validForgotDecrypt($_POST["code"]);	//metodo da classe user
+	User::setForgotUsed($forgot["idrecovery"]);//metodo da classe user
 	$user = new User();
-	$user->get((int)$forgot["iduser"]);
-	$password = User::getPasswordHash($_POST["password"]);
-	$user->setPassword($password);
+	$user->get((int)$forgot["iduser"]);//metodo da classe user
+	$password = User::getPasswordHash($_POST["password"]);//metodo da classe user
+	$user->setPassword($password);//metodo da classe user
 	$page = new Page();
-	$page->setTpl("forgot-reset-success1");
+	$page->setTpl("forgot-reset-success1");//html
 });
 
+
+//rota que é jogada na tela
 $app->get("/profile", function(){
-    User::verifyLogin(false);
-    $user= User::getFromSession();
+    User::verifyLogin(false);//false evita que o cliente acesse o login do admin
+    $user= User::getFromSession();//metodo da classe user
     $page = new Page();
 
-    $page->setTpl("profile",[
+    $page->setTpl("profile",[//html
         'user'=>$user->getValues(),
-        'profileMsg'=>User::getSuccess(),
-        'profileError'=>User::getError()
+        'profileMsg'=>User::getSuccess(),//Metodo da classe user
+        'profileError'=>User::getError()//metodo da classe user
     ]);
 });
 
+
+//rota que é chamada pelo <a> do html
 $app->post("/profile", function(){
-	User::verifyLogin(false);
+	User::verifyLogin(false);//false evita que o cliente acesse o login do admin
 	if (!isset($_POST['desperson']) || $_POST['desperson'] === '') {
 		$_SESSION[User::SESSION] = $user->getValues(); 
-		User::setError("Preencha o seu nome.");
-		header('Location: /profile');
+		User::setError("Preencha o seu nome.");//Metodo da classe user
+		header('Location: /profile');//rota que retornara
 		exit;
 	}
 	if (!isset($_POST['desemail']) || $_POST['desemail'] === '') {
-		User::setError("Preencha o seu e-mail.");
-		header('Location: /profile');
+		User::setError("Preencha o seu e-mail.");//Metodo da classe user
+		header('Location: /profile');//rota que retornara
 		exit;
 	}
 	$user = User::getFromSession();
+	//se o endereço de email for editado
 	if ($_POST['desemail'] !== $user->getdesemail()) {
-		if (User::checkLoginExists($_POST['desemail']) === true) {
-			User::setError("Este endereço de e-mail já está cadastrado.");
-			header('Location: /profile');
+		//verifica se esse email já esta sendo usado
+		if (User::checkLoginExist($_POST['desemail']) === true) {
+			User::setError("Este endereço de e-mail já está cadastrado.");//Metodo da classe user
+			header('Location: /profile');//rota que retornara
 			exit;
 		}
 	}
@@ -306,28 +403,32 @@ $app->post("/profile", function(){
 	$_POST['despassword'] = $user->getdespassword();
 	$_POST['deslogin'] = $_POST['desemail'];
 	$user->setData($_POST);
-	$user->update();
+	$user->update();//metodo da classe user
 	$_SESSION[User::SESSION] = $user->getValues();
-	User::setSuccess("Dados alterados com sucesso!");
-	header('Location: /profile');
+	User::setSuccess("Dados alterados com sucesso!");//metodo da classe user
+	header('Location: /profile');//rota que retornara
 	exit;
 });
 
+
+//rota que é jogada na tela
 $app->get("/order/:idorder", function($idorder){
-	User::verifyLogin(false);
+	User::verifyLogin(false);//o cliente não consegui entrar no login do admin
 	$order =  new Order();
-	$order->get((int)$idorder);
+	$order->get((int)$idorder);//metodo da classe order
 	$page = new Page();
-	$page->setTpl("payment",[
+	$page->setTpl("payment",[//html
 		'order'=>$order->getValues()
 
 	]);
 });
 
+//rota que é jogada na tela 
+//rota que é puxada pelo <iframe> do html
 $app->get("/boleto/:idorder", function($idorder){
 	User::verifyLogin(false);
 	$order = new Order();
-	$order->get((int)$idorder);
+	$order->get((int)$idorder);//metodo da classe order
 	// DADOS DO BOLETO PARA O SEU CLIENTE
 	$dias_de_prazo_para_pagamento = 10;
 	$taxa_boleto = 5.00;
@@ -379,15 +480,20 @@ $app->get("/boleto/:idorder", function($idorder){
 	require_once($path . "layout_itau.php");
 });
 
+
+//rota que é jogada na tela
+//rora que é chamada pelo <a> do html
 $app->get("/profile/orders", function(){
 	User::verifyLogin(false);
-	$user = User::getFromSession();
+	$user = User::getFromSession();//metodo da classe user
 	$page = new Page();
-	$page->setTpl("profile-orders",[
+	$page->setTpl("profile-orders",[//html
 		'orders'=>$user->getOrders(),
 	]);
 });
 
+//rota que é jogada na tela
+//rora que é chamada pelo <a> do html
 $app->get("/profile/orders/:idorder",function($idorder){
 	User::verifyLogin(false);
 	$order = new order();
@@ -396,7 +502,7 @@ $app->get("/profile/orders/:idorder",function($idorder){
 	$cart->get((int)$order->getidcart());
 	$cart->getCalculateTotal();
 	$page = new Page();
-	$page->setTpl("profile-orders-detail",[
+	$page->setTpl("profile-orders-detail",[//html
 		'order'=>$order->getValues(),
 		'cart'=>$cart->getValues(),
 		'products'=>$cart->getProducts()
@@ -404,47 +510,56 @@ $app->get("/profile/orders/:idorder",function($idorder){
 	]);
 });
 
+//rota que é jogada na tela
 $app->get("/profile/change-password", function(){
 	User::verifyLogin(false);
 	$page = new Page();
 	$page->setTpl("profile-change-password",[
-		'changePassError'=>'',
-		'changePassSuccess'=>''
+		'changePassError'=>User::getError(),//metodo da classe user
+		'changePassSuccess'=>User::getSuccess()//metodo da classe user
 	]);
 });
+
+//rora que é chamada pelo formulario do html
 $app->post("/profile/change-password", function(){
 	User::verifyLogin(false);
 	if (!isset($_POST['current_pass']) || $_POST['current_pass'] === '') {
-		User::setError("Digite a senha atual.");
-		header("Location: /profile/change-password");
+		User::setError("Digite a senha atual.");//metodo da classe user
+		header("Location: /profile/change-password");//rota que retornara caso de erro
 		exit;
 	}
 	if (!isset($_POST['new_pass']) || $_POST['new_pass'] === '') {
-		User::setError("Digite a nova senha.");
-		header("Location: /profile/change-password");
+		User::setError("Digite a nova senha.");//metodo da classe user
+		header("Location: /profile/change-password");//rota que retornara caso de erro
 		exit;
 	}
 	if (!isset($_POST['new_pass_confirm']) || $_POST['new_pass_confirm'] === '') {
-		User::setError("Confirme a nova senha.");
-		header("Location: /profile/change-password");
+		User::setError("Confirme a nova senha.");//metodo da classe user
+		header("Location: /profile/change-password");//rota que retornara caso de erro
 		exit;
 	}
 	if ($_POST['current_pass'] === $_POST['new_pass']) {
-		User::setError("A sua nova senha deve ser diferente da atual.");
-		header("Location: /profile/change-password");
+		User::setError("A sua nova senha deve ser diferente da atual.");//metodo da classe user
+		header("Location: /profile/change-password");//rota que retornara caso de erro
 		exit;		
 	}
-	$user = User::getFromSession();
-	if (!password_verify($_POST['current_pass'], $user->getdespassword())) {
-		User::setError("A senha está inválida.");
+	if ($_POST['new_pass'] != $_POST['new_pass_confirm']) {
+ 
+		User::setError("A senha de confirmação deve ser igual a nova senha.");
 		header("Location: /profile/change-password");
+		exit;
+		}
+	$user = User::getFromSession();//metodo da classe user
+	if (!password_verify($_POST['current_pass'], $user->getdespassword())) {
+		User::setError("A senha está inválida.");//metodo da classe user
+		header("Location: /profile/change-password");//rota que retornara caso de erro
 		exit;			
 	}
-	$user->setdespassword($_POST['new_pass']);
-	$user->update();
+	$user->setdespassword($_POST['new_pass']);//metodo da classe user
+	$user->update();//metodo da classe user
 	$_SESSION[User::SESSION] = $user->getValues();
-	User::setSuccess("Senha alterada com sucesso.");
-	header("Location: /profile/change-password");
+	User::setSuccess("Senha alterada com sucesso.");//metodo da classe user
+	header("Location: /profile/change-password");//rota que retorna em caso de sucesso
 	exit;
 });
  ?>

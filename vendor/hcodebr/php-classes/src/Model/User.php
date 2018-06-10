@@ -11,11 +11,11 @@ use \Hcode\Mailer;
 
 class User extends Model {
 //constantes
-	const SESSION = "User";
+	const SESSION = "User";//constante da sessão
 	const SECRET = "HcodePhp7_Secret";//constante para descriptografar o link recebido por email
-	const ERROR = "UserError";
-	const ERROR_REGISTER = "UserErrorRegister";
-	const SUCCESS = "UserSucesss";
+	const ERROR = "UserError";//constante do erro do login
+	const ERROR_REGISTER = "UserErrorRegister";//constante do erro do cadastro
+	const SUCCESS = "UserSucesss";//constante do sucesso
 
 	public static function getFromSession()
 	{
@@ -50,11 +50,11 @@ class User extends Model {
 			if ($inadmin === true && (bool)$_SESSION[User::SESSION]['inadmin'] === true) {
 
 				return true;
-
+				//esta logado mais não é um administrador
 			} else if ($inadmin === false) {
 
 				return true;
-
+				//esta logado e é um administrador				
 			} else {
 
 				return false;
@@ -64,7 +64,7 @@ class User extends Model {
 		}
 
 	}
-
+	//verifica o login e inicia a sessão
 	public static function login($login, $password)
 	{
 
@@ -108,17 +108,17 @@ class User extends Model {
 
 	}
 
-//metodo que verifica se o usuario esta logado e se a sess~]ao foi iniciada
+		//metodo que verifica se o usuario esta logado e se a sessão foi iniciada
 
-	public static function verifyLogin($inadmin = true)
+	public static function verifyLogin($inadmin = true)//o usuario tem que ser admin, para acessar esse html
 	{
-//se não tiver logado vai para /admin/login
+		//se não tiver logado vai para /admin/login
 		if (!User::checkLogin($inadmin)) {//metodo criado dentro deste propio arquivo
 
 			if ($inadmin) {
 				header("Location: /admin/login");
 
-//se tiver logado vai para /admin
+			//se tiver logado vai para /admin
 				
 			} else {
 				header("Location: /login");
@@ -129,7 +129,7 @@ class User extends Model {
 
 	}
 
-//metodo que desroi a sessão
+	//metodo que desroi a sessão
 
 	public static function logout()
 	{
@@ -157,7 +157,7 @@ class User extends Model {
 		$results = $sql->select("CALL sp_users_save(:desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)", array(
 			":desperson"=>utf8_decode($this->getdesperson()),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>User::getPasswordHash($this->getdespassword()),
+			":despassword"=>User::getPasswordHash($this->getdespassword()),//metodo desse propio arquivo
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()
@@ -195,7 +195,7 @@ class User extends Model {
 			":iduser"=>$this->getiduser(),
 			":desperson"=>utf8_decode($this->getdesperson()),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>User::getPasswordHash($this->getdespassword()),
+			":despassword"=>User::getPasswordHash($this->getdespassword()),//metodo desse propio arquivo
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()
@@ -261,11 +261,11 @@ class User extends Model {
 				$dataRecovery = $results2[0];
 
 				$code = base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_128, User::SECRET, $dataRecovery["idrecovery"], MCRYPT_MODE_ECB));//encripta esse link
-
+				//se for um admin
 				if ($inadmin === true) {
 					
 					$link = "http://localhost:3000/admin/forgot/reset?code=$code";
-
+					//se for um cliente
 				} else {
 
 					$link = "http://localhost:3000/forgot/reset?code=$code";
@@ -324,7 +324,7 @@ class User extends Model {
 		}
 
 	}
-//troca a senha
+	//troca a senha via email
 	public static function setFogotUsed($idrecovery)
 	{
 
@@ -335,7 +335,7 @@ class User extends Model {
 		));
 
 	}
-
+	//troca a senha via hmtl
 	public function setPassword($password)
 	{
 
@@ -347,14 +347,14 @@ class User extends Model {
 		));
 
 	}
-
+	//inicia a sessão do errro
 	public static function setError($msg)
 	{
 
 		$_SESSION[User::ERROR] = $msg;
 
 	}
-
+	//PEGA O ERRO
 	public static function getError()
 	{
 
@@ -365,7 +365,7 @@ class User extends Model {
 		return $msg;
 
 	}
-
+	//encerra a sessão do erro
 	public static function clearError()
 	{
 
@@ -373,6 +373,7 @@ class User extends Model {
 
 	}
 
+	//cria a sessão com mensagem de sucesso
 	public static function setSuccess($msg)
 	{
 
@@ -380,6 +381,7 @@ class User extends Model {
 
 	}
 
+	//pega a mesagem de sucesso
 	public static function getSuccess()
 	{
 
@@ -391,6 +393,7 @@ class User extends Model {
 
 	}
 
+		//limpa a sessão com mensagem de sucesso
 	public static function clearSuccess()
 	{
 
@@ -398,6 +401,7 @@ class User extends Model {
 
 	}
 
+	//inicia a sessão do erro
 	public static function setErrorRegister($msg)
 	{
 
@@ -405,6 +409,7 @@ class User extends Model {
 
 	}
 
+	//pega o erro
 	public static function getErrorRegister()
 	{
 
@@ -416,6 +421,7 @@ class User extends Model {
 
 	}
 
+	//encerra a sessão do erro
 	public static function clearErrorRegister()
 	{
 
@@ -423,6 +429,7 @@ class User extends Model {
 
 	}
 
+	//CHECKA SE O LOGIN JA EXISTE PARA EVITAR DE CADASTRAR DOIS IGUAIS OU ATE MAIS
 	public static function checkLoginExist($login)
 	{
 
@@ -436,6 +443,7 @@ class User extends Model {
 
 	}
 
+	//metodo para encriptar a senha
 	public static function getPasswordHash($password)
 	{
 
@@ -445,6 +453,7 @@ class User extends Model {
 
 	}
 
+	//seleciona a tabela de pedidos no banco de dados
 	public function getOrders()
 	{
 
@@ -467,6 +476,7 @@ class User extends Model {
 
 	}
 
+	//lista os usuarios
 	public static function getPage($page = 1, $itemsPerPage = 10)
 	{
 
@@ -489,9 +499,10 @@ class User extends Model {
 			'total'=>(int)$resultTotal[0]["nrtotal"],
 			'pages'=>ceil($resultTotal[0]["nrtotal"] / $itemsPerPage)
 		];
-
+ 
 	}
 
+	//lista os usuarios da busca
 	public static function getPageSearch($search, $page = 1, $itemsPerPage = 10)
 	{
 

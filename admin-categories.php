@@ -13,7 +13,7 @@ $app->get("/admin/categories", function(){
 	User::verifyLogin();//verifica se esta logado
 	User::verifyLogin();
  
-
+	//busca do html
 	$search = (isset($_GET['search'])) ? $_GET['search'] : "";
 	$page = (isset($_GET['page'])) ? (int)$_GET['page'] : 1;
 
@@ -29,7 +29,7 @@ $app->get("/admin/categories", function(){
 	}
 
 	$pages = [];
-	//paginação e busca
+	
 	for ($x = 0; $x < $pagination['pages']; $x++)
 	{
 
@@ -62,7 +62,7 @@ $app->get("/admin/categories/create", function(){
 $app->post("/admin/categories/create", function(){
 	User::verifyLogin();
 	$category = new Category();
-	$category->setData($_POST);//metodo da classe category
+	$category->setData($_POST);//metodo da classe model
 	$category->save();//metodo da classe category
 	header('Location: /admin/categories');//rota que retornara
 	exit;
@@ -95,40 +95,49 @@ $app->post("/admin/categories/:idcategory", function($idcategory){
 	User::verifyLogin();
 	$category = new Category();
 	$category->get((int)$idcategory);//metodo da classe category
-	$category->setData($_POST);//metodo da classe category
+	$category->setData($_POST);//metodo da classe model
 	$category->save();	//metodo da classe category
 	header('Location: /admin/categories');//rota que retornara
 	exit;
 });
+
+//rota que é jogada na tela
+//rota que é chamada pelo <a> do html
 $app->get("/admin/categories/:idcategory/products", function($idcategory){
 	User::verifyLogin();
 	$category = new Category();
-	$category->get((int)$idcategory);
+	$category->get((int)$idcategory);//metodo da classe product
 	$page = new PageAdmin();
-	$page->setTpl("categories-products", [
+	$page->setTpl("categories-products", [//html
 		'category'=>$category->getValues(),
-		'productsRelated'=>$category->getProducts(),
-		'productsNotRelated'=>$category->getProducts(false)
+		'productsRelated'=>$category->getProducts(),//produtos relacionados com algumacategoria
+		'productsNotRelated'=>$category->getProducts(false)//produtos não relacionados
 	]);
 });
+
+//rota que é jogada na tela
+//rota que é chamada pelo <a> do html
 $app->get("/admin/categories/:idcategory/products/:idproduct/add", function($idcategory, $idproduct){
 	User::verifyLogin();
 	$category = new Category();
-	$category->get((int)$idcategory);
+	$category->get((int)$idcategory);//metodo da classe category
 	$product = new Product();
-	$product->get((int)$idproduct);
-	$category->addProduct($product);
-	header("Location: /admin/categories/".$idcategory."/products");
+	$product->get((int)$idproduct);//metodo da classe category
+	$category->addProduct($product);//metodo da classe category
+	header("Location: /admin/categories/".$idcategory."/products");//rota que retronara
 	exit;
 });
+
+//rota que é jogada na tela
+//rota que é chamada pelo <a> do html
 $app->get("/admin/categories/:idcategory/products/:idproduct/remove", function($idcategory, $idproduct){
 	User::verifyLogin();
 	$category = new Category();
-	$category->get((int)$idcategory);
+	$category->get((int)$idcategory);//metodo da classe category
 	$product = new Product();
-	$product->get((int)$idproduct);
-	$category->removeProduct($product);
-	header("Location: /admin/categories/".$idcategory."/products");
+	$product->get((int)$idproduct);//metodo da classe category
+	$category->removeProduct($product);//metodo da classe category
+	header("Location: /admin/categories/".$idcategory."/products");//rota que retornara
 	exit;
 });
  ?>
